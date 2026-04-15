@@ -1,0 +1,27 @@
+autonomous_flight_node:
+  ros__parameters:
+    cmd_vel_topic: /cmd_vel
+    odom_topic: /odom
+    takeoff_topic: /drone/takeoff
+    land_topic: /drone/land
+    use_takeoff_land_topics: true
+
+    control_rate_hz: 20.0
+    altitude_target_m: 2.5
+    altitude_tolerance_m: 0.2
+    xy_tolerance_m: 0.35
+    yaw_tolerance_rad: 0.25
+
+    max_lin_speed: 0.8
+    max_z_speed: 0.5
+    max_yaw_rate: 0.6
+    kp_xy: 0.6
+    kp_z: 0.7
+    kp_yaw: 1.0
+
+    search_x_min: -6.0
+    search_x_max: 6.0
+    search_y_min: -6.0
+    search_y_max: 6.0
+    search_row_spacing: 2.0
+    start_yaw_rad: 0.0
