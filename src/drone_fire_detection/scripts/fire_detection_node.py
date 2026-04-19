@@ -10,6 +10,7 @@ import cv2
 import numpy as np
 import rclpy
 from cv_bridge import CvBridge, CvBridgeError
+from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
@@ -21,20 +22,22 @@ class FireDetectionNode(Node):
     def __init__(self) -> None:
         super().__init__("fire_detection_node")
 
-        # Declare parameters so thresholds and UI behavior can be adjusted
-        # without changing code.
         self.declare_parameter("camera_topic", "/drone/camera")
+        self.declare_parameter("odom_topic", "/odom")
         self.declare_parameter("fire_detected_topic", "/fire_detected")
         self.declare_parameter("min_contour_area", 500.0)
         self.declare_parameter("window_name", "Fire Detection")
-        self.declare_parameter("display_window", True)
+        self.declare_parameter("display_window", False)
 
         self._bridge = CvBridge()
         self._window_name = str(self.get_parameter("window_name").value)
         self._display_window = bool(self.get_parameter("display_window").value)
         self._min_contour_area = float(self.get_parameter("min_contour_area").value)
 
-        # Define HSV ranges for red and orange tones typically associated with fire.
+        # Current drone world position, updated via odometry.
+        self._world_x: float = 0.0
+        self._world_y: float = 0.0
+
         # Red wraps in HSV, so two ranges are required to cover both ends.
         self._red_ranges: List[Tuple[np.ndarray, np.ndarray]] = [
             (np.array([0, 120, 120], dtype=np.uint8), np.array([10, 255, 255], dtype=np.uint8)),
@@ -45,8 +48,12 @@ class FireDetectionNode(Node):
             np.array([25, 255, 255], dtype=np.uint8),
         )
 
-        # Create the subscriber for the drone camera feed and the publisher for
-        # human-readable fire detection alerts.
+        self._odom_sub = self.create_subscription(
+            Odometry,
+            str(self.get_parameter("odom_topic").value),
+            self._odom_callback,
+            10,
+        )
         self._image_sub = self.create_subscription(
             Image,
             str(self.get_parameter("camera_topic").value),
@@ -64,6 +71,11 @@ class FireDetectionNode(Node):
 
         self.get_logger().info("Fire detection node started.")
 
+    def _odom_callback(self, msg: Odometry) -> None:
+        """Cache the drone's world position for use when publishing fire alerts."""
+        self._world_x = msg.pose.pose.position.x
+        self._world_y = msg.pose.pose.position.y
+
     def image_callback(self, msg: Image) -> None:
         """Process each incoming image, annotate detections, and publish results."""
         frame = self._convert_image(msg)
@@ -73,9 +85,12 @@ class FireDetectionNode(Node):
         processed_frame, fire_center = self._detect_fire(frame)
 
         if fire_center is not None:
-            center_x, center_y = fire_center
+            # Publish world coordinates (drone position) so downstream nodes can
+            # place accurate RViz markers and log meaningful GPS-like positions.
             alert_msg = String()
-            alert_msg.data = f"Fire detected at x={center_x}, y={center_y}"
+            alert_msg.data = (
+                f"Fire detected at x={self._world_x:.2f}, y={self._world_y:.2f}"
+            )
             self._fire_pub.publish(alert_msg)
 
         if self._display_window:
@@ -148,25 +163,24 @@ class FireDetectionNode(Node):
 
         return annotated_frame, largest_center
 
-    def destroy_node(self) -> bool:
-        """Release OpenCV resources before shutting down the node."""
+    def destroy_node(self) -> None:
         if self._display_window:
             cv2.destroyAllWindows()
-        return super().destroy_node()
+        super().destroy_node()
 
 
 def main(args: Optional[List[str]] = None) -> None:
-    """Initialize ROS, spin the node, and shut down cleanly."""
     rclpy.init(args=args)
     node = FireDetectionNode()
 
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, Exception):
         node.get_logger().info("Shutting down fire detection node.")
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":

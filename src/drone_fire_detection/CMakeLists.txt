@@ -13,9 +13,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+find_package(visualization_msgs REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -33,6 +31,7 @@ install(PROGRAMS
   scripts/autonomous_flight_node.py
   scripts/fire_detection_node.py
   scripts/ros_alert_node.py
+  scripts/mode_mux_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

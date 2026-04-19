@@ -4,7 +4,7 @@ autonomous_flight_node:
     odom_topic: /odom
     takeoff_topic: /drone/takeoff
     land_topic: /drone/land
-    use_takeoff_land_topics: true
+    use_takeoff_land_topics: false
 
     control_rate_hz: 20.0
     altitude_target_m: 2.5

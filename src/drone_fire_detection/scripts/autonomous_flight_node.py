@@ -83,6 +83,8 @@ class AutonomousFlightNode(Node):
         self.kp_yaw = float(self.get_parameter("kp_yaw").value)
         self.start_yaw = float(self.get_parameter("start_yaw_rad").value)
 
+        self.declare_parameter("fire_hover_duration_s", 10.0)
+
         self.current_pose = None
         self.current_yaw = 0.0
         self.state = MissionState.TAKEOFF
@@ -90,6 +92,13 @@ class AutonomousFlightNode(Node):
         self.land_sent = False
         self.fire_detected = False
         self.hover_target = None
+        self._fire_hover_end: Optional[float] = None
+        self._hover_duration = float(
+            self.get_parameter("fire_hover_duration_s").value
+        )
+
+        # Allow external reset (e.g. mode_mux switching back to autonomous)
+        self.create_subscription(String, "/clear_fire", self._clear_fire_cb, 10)
 
         self.search_waypoints = self.build_lawnmower_waypoints()
         self.current_wp_idx = 0
@@ -223,6 +232,17 @@ class AutonomousFlightNode(Node):
             self.publish_stop()
             return
 
+        # Resume search once hover duration has elapsed.
+        now = self.get_clock().now().nanoseconds * 1e-9
+        if self._fire_hover_end is not None and now >= self._fire_hover_end:
+            self.get_logger().info(
+                "Hover complete — resuming search mission."
+            )
+            self.fire_detected = False
+            self.hover_target = None
+            self._fire_hover_end = None
+            return
+
         tx, ty, tz, tyaw = self.hover_target
         cx = self.current_pose.position.x
         cy = self.current_pose.position.y
@@ -250,9 +270,21 @@ class AutonomousFlightNode(Node):
             self.current_pose.position.z,
             self.current_yaw,
         )
-        self.get_logger().info(
-            f"Fire detected, holding position at current location. Alert: {msg.data}"
+        self._fire_hover_end = (
+            self.get_clock().now().nanoseconds * 1e-9 + self._hover_duration
         )
+        self.get_logger().info(
+            f"Fire detected — hovering for {self._hover_duration:.0f}s then resuming. "
+            f"Alert: {msg.data}"
+        )
+
+    def _clear_fire_cb(self, msg: String) -> None:
+        """Reset fire state — called when operator switches back to autonomous."""
+        if self.fire_detected:
+            self.get_logger().info("Fire flag cleared — resuming search mission.")
+        self.fire_detected = False
+        self.hover_target = None
+        self._fire_hover_end = None
 
     def publish_cmd(self, vx: float, vy: float, vz: float, wz: float) -> None:
         msg = Twist()
@@ -283,12 +315,13 @@ def main(args=None) -> None:
     node = AutonomousFlightNode()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, Exception):
         node.get_logger().info("Shutting down autonomous flight node.")
     finally:
         node.publish_stop()
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":

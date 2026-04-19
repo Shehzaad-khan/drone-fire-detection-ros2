@@ -101,10 +101,9 @@ class FireAlertNode(Node):
 
         return float(match.group("x")), float(match.group("y"))
 
-    def destroy_node(self) -> bool:
-        """Close the CSV file before shutting down."""
+    def destroy_node(self) -> None:
         self._csv_file.close()
-        return super().destroy_node()
+        super().destroy_node()
 
 
 def main(args=None) -> None:
@@ -112,11 +111,12 @@ def main(args=None) -> None:
     node = FireAlertNode()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, Exception):
         node.get_logger().info("Shutting down fire alert node.")
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":

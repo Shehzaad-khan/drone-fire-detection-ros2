@@ -1,57 +1,73 @@
 <?xml version="1.0" ?>
-<sdf version="1.9">
+<sdf version="1.7">
   <world name="fire_world">
-    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
-    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
-      <render_engine>ogre2</render_engine>
-    </plugin>
-    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
-    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+
+    <physics name="default_physics" default="true" type="ode">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1</real_time_factor>
+    </physics>
 
     <light name="sun" type="directional">
       <cast_shadows>true</cast_shadows>
       <pose>0 0 10 0 0 0</pose>
-      <diffuse>1 1 1 1</diffuse>
+      <diffuse>0.9 0.9 0.9 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.5 0.1 -0.9</direction>
     </light>
 
     <model name="ground_plane">
       <static>true</static>
       <link name="link">
         <visual name="visual">
-          <geometry><plane><normal>0 0 1</normal><size>50 50</size></plane></geometry>
-          <material><ambient>0.5 0.5 0.5 1</ambient></material>
+          <geometry><plane><normal>0 0 1</normal><size>100 100</size></plane></geometry>
+          <material>
+            <ambient>0.4 0.4 0.4 1</ambient>
+            <diffuse>0.4 0.4 0.4 1</diffuse>
+          </material>
         </visual>
         <collision name="collision">
-          <geometry><plane><normal>0 0 1</normal><size>50 50</size></plane></geometry>
+          <geometry><plane><normal>0 0 1</normal><size>100 100</size></plane></geometry>
         </collision>
       </link>
     </model>
 
+    <!-- Fire source 1 — bright orange-red so HSV thresholds trigger -->
     <model name="fire1">
       <static>true</static>
-      <pose>5 3 0 0 0 0</pose>
+      <pose>5 3 0.4 0 0 0</pose>
       <link name="link">
         <visual name="visual">
-          <geometry><cylinder><radius>0.3</radius><length>0.8</length></cylinder></geometry>
-          <material><ambient>1 0.2 0 1</ambient><diffuse>1 0.1 0 1</diffuse></material>
+          <geometry><cylinder><radius>0.4</radius><length>0.8</length></cylinder></geometry>
+          <material>
+            <ambient>1 0.15 0 1</ambient>
+            <diffuse>1 0.05 0 1</diffuse>
+            <emissive>0.9 0.1 0 1</emissive>
+            <specular>0 0 0 0</specular>
+          </material>
         </visual>
       </link>
     </model>
 
+    <!-- Fire source 2 -->
     <model name="fire2">
       <static>true</static>
-      <pose>-4 6 0 0 0 0</pose>
+      <pose>-4 6 0.4 0 0 0</pose>
       <link name="link">
         <visual name="visual">
-          <geometry><cylinder><radius>0.3</radius><length>0.8</length></cylinder></geometry>
-          <material><ambient>1 0.3 0 1</ambient><diffuse>1 0.1 0 1</diffuse></material>
+          <geometry><cylinder><radius>0.4</radius><length>0.8</length></cylinder></geometry>
+          <material>
+            <ambient>1 0.15 0 1</ambient>
+            <diffuse>1 0.05 0 1</diffuse>
+            <emissive>0.9 0.1 0 1</emissive>
+            <specular>0 0 0 0</specular>
+          </material>
         </visual>
       </link>
     </model>
 
     <model name="building1">
       <static>true</static>
-      <pose>2 -3 0 0 0 0</pose>
+      <pose>2 -3 1.5 0 0 0</pose>
       <link name="link">
         <visual name="visual">
           <geometry><box><size>2 2 3</size></box></geometry>
