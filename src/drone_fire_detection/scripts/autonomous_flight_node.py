@@ -9,6 +9,7 @@ from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from std_msgs.msg import Empty
+from std_msgs.msg import String
 
 
 class MissionState(Enum):
@@ -26,6 +27,7 @@ class AutonomousFlightNode(Node):
         self.declare_parameter("odom_topic", "/odom")
         self.declare_parameter("takeoff_topic", "/drone/takeoff")
         self.declare_parameter("land_topic", "/drone/land")
+        self.declare_parameter("fire_detected_topic", "/fire_detected")
         self.declare_parameter("use_takeoff_land_topics", True)
         self.declare_parameter("control_rate_hz", 20.0)
         self.declare_parameter("altitude_target_m", 2.5)
@@ -50,6 +52,12 @@ class AutonomousFlightNode(Node):
         )
         self.odom_sub = self.create_subscription(
             Odometry, self.get_parameter("odom_topic").value, self.odom_callback, 10
+        )
+        self.fire_detected_sub = self.create_subscription(
+            String,
+            self.get_parameter("fire_detected_topic").value,
+            self.fire_detected_callback,
+            10,
         )
 
         self.use_takeoff_land_topics = bool(
@@ -80,6 +88,8 @@ class AutonomousFlightNode(Node):
         self.state = MissionState.TAKEOFF
         self.takeoff_sent = False
         self.land_sent = False
+        self.fire_detected = False
+        self.hover_target = None
 
         self.search_waypoints = self.build_lawnmower_waypoints()
         self.current_wp_idx = 0
@@ -128,6 +138,10 @@ class AutonomousFlightNode(Node):
 
     def control_loop(self) -> None:
         if self.current_pose is None:
+            return
+
+        if self.fire_detected:
+            self.handle_hover()
             return
 
         if self.state == MissionState.TAKEOFF:
@@ -203,6 +217,42 @@ class AutonomousFlightNode(Node):
             self.publish_stop()
             self.state = MissionState.DONE
             self.get_logger().info("Landing complete. Mission done.")
+
+    def handle_hover(self) -> None:
+        if self.hover_target is None:
+            self.publish_stop()
+            return
+
+        tx, ty, tz, tyaw = self.hover_target
+        cx = self.current_pose.position.x
+        cy = self.current_pose.position.y
+        cz = self.current_pose.position.z
+
+        ex = tx - cx
+        ey = ty - cy
+        ez = tz - cz
+        yaw_error = self.normalize_angle(tyaw - self.current_yaw)
+
+        vx = self.clamp(self.kp_xy * ex, self.max_lin_speed)
+        vy = self.clamp(self.kp_xy * ey, self.max_lin_speed)
+        vz = self.clamp(self.kp_z * ez, self.max_z_speed)
+        wz = self.clamp(self.kp_yaw * yaw_error, self.max_yaw_rate)
+        self.publish_cmd(vx, vy, vz, wz)
+
+    def fire_detected_callback(self, msg: String) -> None:
+        if self.current_pose is None or self.fire_detected:
+            return
+
+        self.fire_detected = True
+        self.hover_target = (
+            self.current_pose.position.x,
+            self.current_pose.position.y,
+            self.current_pose.position.z,
+            self.current_yaw,
+        )
+        self.get_logger().info(
+            f"Fire detected, holding position at current location. Alert: {msg.data}"
+        )
 
     def publish_cmd(self, vx: float, vy: float, vz: float, wz: float) -> None:
         msg = Twist()

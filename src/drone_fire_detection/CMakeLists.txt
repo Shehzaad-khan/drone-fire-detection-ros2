@@ -32,6 +32,7 @@ endif()
 install(PROGRAMS
   scripts/autonomous_flight_node.py
   scripts/fire_detection_node.py
+  scripts/ros_alert_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

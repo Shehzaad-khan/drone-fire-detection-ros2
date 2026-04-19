@@ -35,5 +35,17 @@ def generate_launch_description():
             name='autonomous_flight_node',
             output='screen',
             parameters=[params_file]
+        ),
+        Node(
+            package='drone_fire_detection',
+            executable='fire_detection_node.py',
+            name='fire_detection_node',
+            output='screen'
+        ),
+        Node(
+            package='drone_fire_detection',
+            executable='ros_alert_node.py',
+            name='fire_alert_node',
+            output='screen'
         )
     ])
