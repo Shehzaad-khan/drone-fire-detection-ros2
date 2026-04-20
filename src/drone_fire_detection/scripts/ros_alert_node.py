@@ -29,7 +29,7 @@ class FireAlertNode(Node):
         self.declare_parameter("marker_topic", "/fire_markers")
         self.declare_parameter("marker_frame_id", "map")
         self.declare_parameter("marker_scale_m", 0.5)
-        self.declare_parameter("csv_log_path", "fire_log.csv")
+        self.declare_parameter("csv_log_path", "/home/pes2ug23cs349/fire_log.csv")
 
         self._marker_id = 0
         self._csv_file = open(

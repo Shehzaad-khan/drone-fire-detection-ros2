@@ -8,7 +8,7 @@ autonomous_flight_node:
 
     control_rate_hz: 20.0
     altitude_target_m: 2.5
-    altitude_tolerance_m: 0.2
+    altitude_tolerance_m: 2.0
     xy_tolerance_m: 0.35
     yaw_tolerance_rad: 0.25
 
@@ -19,9 +19,9 @@ autonomous_flight_node:
     kp_z: 0.7
     kp_yaw: 1.0
 
-    search_x_min: -6.0
-    search_x_max: 6.0
-    search_y_min: -6.0
-    search_y_max: 6.0
+    search_x_min: -3.5
+    search_x_max: 3.5
+    search_y_min: -3.5
+    search_y_max: 3.5
     search_row_spacing: 2.0
     start_yaw_rad: 0.0

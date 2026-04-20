@@ -22,10 +22,10 @@ class FireDetectionNode(Node):
     def __init__(self) -> None:
         super().__init__("fire_detection_node")
 
-        self.declare_parameter("camera_topic", "/drone/camera")
+        self.declare_parameter("camera_topic", "/drone/camera/image_raw")
         self.declare_parameter("odom_topic", "/odom")
         self.declare_parameter("fire_detected_topic", "/fire_detected")
-        self.declare_parameter("min_contour_area", 500.0)
+        self.declare_parameter("min_contour_area", 100.0)
         self.declare_parameter("window_name", "Fire Detection")
         self.declare_parameter("display_window", False)
 
@@ -39,13 +39,14 @@ class FireDetectionNode(Node):
         self._world_y: float = 0.0
 
         # Red wraps in HSV, so two ranges are required to cover both ends.
+        # Permissive thresholds — Gazebo OGRE renderer desaturates colors slightly
         self._red_ranges: List[Tuple[np.ndarray, np.ndarray]] = [
-            (np.array([0, 120, 120], dtype=np.uint8), np.array([10, 255, 255], dtype=np.uint8)),
-            (np.array([170, 120, 120], dtype=np.uint8), np.array([180, 255, 255], dtype=np.uint8)),
+            (np.array([0, 60, 60], dtype=np.uint8), np.array([15, 255, 255], dtype=np.uint8)),
+            (np.array([160, 60, 60], dtype=np.uint8), np.array([180, 255, 255], dtype=np.uint8)),
         ]
         self._orange_range: Tuple[np.ndarray, np.ndarray] = (
-            np.array([11, 120, 120], dtype=np.uint8),
-            np.array([25, 255, 255], dtype=np.uint8),
+            np.array([8, 60, 60], dtype=np.uint8),
+            np.array([30, 255, 255], dtype=np.uint8),
         )
 
         self._odom_sub = self.create_subscription(

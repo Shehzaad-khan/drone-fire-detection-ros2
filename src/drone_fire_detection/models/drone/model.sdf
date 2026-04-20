@@ -1,8 +1,9 @@
 <?xml version="1.0" ?>
 <sdf version="1.7">
   <model name="drone">
-    <pose>0 0 2.5 0 0 0</pose>
     <link name="base_link">
+      <!-- Gravity disabled — PlanarMove holds the drone at spawn altitude -->
+      <gravity>0</gravity>
       <inertial>
         <mass>1.5</mass>
         <inertia>
@@ -33,8 +34,8 @@
         <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
           <ros>
             <namespace>/drone</namespace>
-            <remapping>image_raw:=camera</remapping>
-            <remapping>camera_info:=camera_info</remapping>
+            <remapping>~/image_raw:=/drone/camera</remapping>
+            <remapping>~/camera_info:=/drone/camera_info</remapping>
           </ros>
           <camera_name>camera</camera_name>
           <frame_name>base_link</frame_name>
