@@ -131,7 +131,7 @@ ros2 launch drone_fire_detection fire_world.launch.py
 
 ## 👥 Team Member Breakdown
 
-### Member 1 — Environment & Drone Setup ✅ COMPLETE
+### Mohammed Mir Fazlai Ali — Environment & Drone Setup 
 **Responsibility:** Set up the ROS2 workspace, create the Gazebo simulation world, and define the drone model.
 
 **What was done:**
@@ -149,7 +149,7 @@ ros2 launch drone_fire_detection fire_world.launch.py
 
 ---
 
-### Member 2 — Autonomous Flight & Navigation 🔲 PENDING
+### Mohammed Shehzaad Khan — Autonomous Flight & Navigation 
 **Responsibility:** Write a ROS2 Python node that makes the drone autonomously navigate the environment.
 
 **To implement:**
@@ -160,7 +160,7 @@ ros2 launch drone_fire_detection fire_world.launch.py
 
 ---
 
-### Member 3 — Fire Detection Algorithm 🔲 PENDING
+### Mohammed Affan Khan — Fire Detection Algorithm 
 **Responsibility:** Process the drone's camera feed and detect fire using OpenCV.
 
 **To implement:**
@@ -172,7 +172,7 @@ ros2 launch drone_fire_detection fire_world.launch.py
 
 ---
 
-### Member 4 — Alert System + Visualization + Report 🔲 PENDING
+### Nimmakayala Veera Mahendra Reddy — Alert System + Visualization + Report 
 **Responsibility:** Handle fire alerts, RViz2 visualization, demo recording, and the final report.
 
 **To implement:**
